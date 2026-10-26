@@ -1,0 +1,141 @@
+image: python:3.11-slim
+
+before_script:
+  - apt-get update && apt-get install -y openmpi-bin libopenmpi-dev gcc g++
+  - pip install --upgrade pip
+  - pip install mpi4py numpy pytest pytest-cov pytest-timeout flake8 black mypy
+
+stages:
+  - check
+  - lint
+  - test
+  - performance
+  - report
+
+variables:
+  MPI_NPROCS: 4
+  TEST_TIMEOUT: 60
+  PERFORMANCE_TIMEOUT: 120
+  COVERAGE_THRESHOLD: 80
+
+# --------------------------
+# ЭТАП 1: Проверка файлов
+# --------------------------
+check_files:
+  stage: check
+  script:
+    - echo "Checking required files..."
+    - |
+      required_files=(
+        "src/sequential.py"
+        "src/parallel_send_recv.py"
+        "src/parallel_scatterv.py"
+        "requirements.txt"
+        "README.md"
+      )
+      for file in "${required_files[@]}"; do
+        if [ ! -f "$file" ]; then
+          echo "❌ File $file not found!"
+          exit 1
+        fi
+      done
+    - echo "✅ All required files present"
+  only:
+    - merge_requests
+    - main
+
+# --------------------------
+# ЭТАП 2: Линтинг Python
+# --------------------------
+lint_python:
+  stage: lint
+  script:
+    - echo "Installing dev dependencies..."
+    - pip install flake8 black mypy
+    - echo "Running flake8..."
+    - flake8 src/ --max-line-length=120 --count
+    - echo "Checking black formatting..."
+    - black --check src/
+    - echo "Running mypy..."
+    - mypy src/ --ignore-missing-imports
+  only:
+    - merge_requests
+    - main
+  allow_failure: true
+
+# --------------------------
+# ЭТАП 3: Тесты
+# --------------------------
+test:
+  stage: test
+  script:
+    - echo "Installing dependencies..."
+    - pip install -r requirements.txt
+    - pip install pytest pytest-cov pytest-timeout
+    - echo "Downloading hidden tests (with reference solutions)..."
+    - |
+      git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/ncfu/parallel/test/lab1-tests.git /tmp/tests
+    - echo "Running tests..."
+    - cd src
+    - |
+      pytest /tmp/tests/python \
+        -v \
+        --maxfail=1 \
+        --timeout=${TEST_TIMEOUT} \
+        --cov=. \
+        --cov-report=term \
+        --cov-report=xml:../coverage.xml
+    - echo "✅ All tests passed"
+  artifacts:
+    paths:
+      - coverage.xml
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage.xml
+  only:
+    - merge_requests
+    - main
+  parallel:
+    matrix:
+      - MPI_NPROCS: [2, 4, 8]
+
+# --------------------------
+# ЭТАП 4: Тесты производительности
+# --------------------------
+performance:
+  stage: performance
+  script:
+    - echo "Installing dependencies..."
+    - pip install -r requirements.txt
+    - pip install pytest pytest-timeout
+    - echo "Downloading hidden tests..."
+    - |
+      git clone https://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.com/ncfu/parallel/test/lab1-tests.git /tmp/tests
+    - echo "Running performance tests..."
+    - cd src
+    - |
+      pytest /tmp/tests/python/test_performance.py \
+        -v \
+        --timeout=${PERFORMANCE_TIMEOUT}
+    - echo "✅ Performance tests passed"
+  only:
+    - main
+  allow_failure: true
+
+# --------------------------
+# ЭТАП 5: Отчет о покрытии
+# --------------------------
+coverage_report:
+  stage: report
+  script:
+    - echo "Generating coverage report..."
+    - pip install coverage-badge
+    - coverage-badge -o coverage.svg -f
+  artifacts:
+    paths:
+      - coverage.svg
+  only:
+    - main
+  dependencies:
+    - test

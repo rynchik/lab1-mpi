@@ -1,0 +1,108 @@
+# Результаты
+Results_*.dat
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ==============================================================================
+# Python Core & Byte-compiled files
+# ==============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller (for compiling to standalone executables)
+*.manifest
+*.spec
+
+# ==============================================================================
+# Virtual Environments & Package Managers
+# ==============================================================================
+# Standard virtual environments
+.venv/
+venv/
+ENV/
+env/
+*.venv
+
+# Poetry, Pipenv, PDM, Pixi local directories
+.pdm-python
+.pear/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# ==============================================================================
+# Configuration, Environment Variables & Secrets (CRITICAL)
+# ==============================================================================
+.env
+.env.*
+.venv
+usr/
+instance/
+.secret
+secrets.*
+*.pem
+*.key
+
+# ==============================================================================
+# Testing & Code Quality / Linting
+# ==============================================================================
+.toml
+.pytest_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+.nosetests
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+
+# ==============================================================================
+# IDEs and Editors
+# ==============================================================================
+# VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.code-workspace
+
+# PyCharm / IntelliJ
+.idea/
+
+# Operating System Files
+.DS_Store
+Thumbs.db
